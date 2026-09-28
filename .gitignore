@@ -1,0 +1,9 @@
+# Runtime/sync metadata — never committed or baked
+**/.locks
+**/.usage.json
+**/.bundled_manifest
+**/.curator_suppressed
+**/*.lock
+**/__pycache__/
+**/.DS_Store
+*.pyc

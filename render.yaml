@@ -1,0 +1,28 @@
+# Render Blueprint — Garrett Cloud Gateway (full Hermes on the cloud)
+#
+# NOTE: Deployed via the Render API (not dashboard), but this file documents
+# the exact shape so the deployment is reproducible. Secrets (Nous auth,
+# Telegram token) are set as env vars — never stored here or in git.
+
+services:
+  - type: worker                # background worker: no port, runs continuously
+    name: garrett-cloud-gateway
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: gateway run  # s6-supervised gateway, main process
+    plan: standard              # 2 GB — gateway spikes past 512 MB in conversation
+    region: oregon
+    autoDeploy: yes
+    branch: main
+    disk:
+      name: garrett-data
+      mountPath: /opt/data      # HERMES_HOME — persistent brain (memories, sessions, skills)
+      sizeGB: 10
+    envVars:
+      - key: HERMES_GATEWAY_BOOTSTRAP_STATE
+        value: running          # auto-start gateway on first boot
+      # Secrets — set via API, never in this file:
+      #   HERMES_AUTH_JSON_BOOTSTRAP  (Nous Portal auth.json content)
+      #   TELEGRAM_BOT_TOKEN
+      #   TELEGRAM_ALLOWED_USERS

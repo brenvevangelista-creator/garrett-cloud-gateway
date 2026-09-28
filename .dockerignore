@@ -1,0 +1,10 @@
+# Exclude filesystem cruft + sync metadata from the skills/memories trees
+# that would otherwise pollute the baked image or confuse skills_sync.
+**/.bundled_manifest
+**/.curator_suppressed
+**/.no-bundled-skills
+**/*.lock
+**/__pycache__/
+**/.DS_Store
+**/.git/
+*.pyc
