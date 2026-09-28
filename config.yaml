@@ -1,4 +1,4 @@
-_config_version: 47
+_config_version: 46
 agent:
   max_turns: 60
   reasoning_effort: medium
