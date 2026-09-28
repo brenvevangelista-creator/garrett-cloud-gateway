@@ -1,0 +1,28 @@
+#!/bin/sh
+# s6-setuidgid shim for Render.
+#
+# Render runs dockerCommand directly as PID 1, so s6-overlay /init never
+# runs and the real s6-setuidgid is not on PATH. stage2-hook.sh and
+# main-wrapper.sh both call `s6-setuidgid hermes <cmd>` to drop from root
+# to the hermes user (uid 10000). Emulate it with util-linux setpriv /
+# runuser / gosu; fall back to running as root when none exist (root passes
+# main-wrapper's guard and is acceptable in this isolated container).
+user="$1"; shift
+
+if [ "$(id -u)" != 0 ]; then
+    exec "$@"
+fi
+
+uid=$(id -u "$user" 2>/dev/null || echo 0)
+gid=$(id -g "$user" 2>/dev/null || echo 0)
+
+if command -v setpriv >/dev/null 2>&1; then
+    exec setpriv --reuid="$uid" --regid="$gid" --init-groups "$@"
+fi
+if command -v runuser >/dev/null 2>&1; then
+    exec runuser -u "$user" -- "$@"
+fi
+if command -v gosu >/dev/null 2>&1; then
+    exec gosu "$user" "$@"
+fi
+exec "$@"

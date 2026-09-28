@@ -28,6 +28,12 @@ COPY memories/ /opt/hermes/garrett-memories/
 COPY seed-memories.sh /opt/hermes/seed-memories.sh
 RUN chmod +x /opt/hermes/seed-memories.sh
 
+# --- s6-setuidgid shim: Render skips s6-overlay /init, so s6-setuidgid is
+# not on PATH. stage2-hook.sh and main-wrapper.sh both call it to drop to
+# the hermes user; this shim emulates it with setpriv/runuser/su.
+COPY s6-setuidgid /opt/hermes/bin/s6-setuidgid
+RUN chmod +x /opt/hermes/bin/s6-setuidgid
+
 # --- Entrypoint: bypass s6-overlay (requires PID 1; Render doesn't give it) -
 # Render's Docker runtime does not exec the image entrypoint as PID 1, so
 # s6-overlay's /init aborts ("can only run as pid 1", exit 128 — hermes-agent

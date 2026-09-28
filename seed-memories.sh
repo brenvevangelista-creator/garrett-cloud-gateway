@@ -1,7 +1,6 @@
-#!/command/with-contenv sh
+#!/bin/sh
 # First-boot seed of Garrett's memories into the persistent volume.
-# Runs after stage2-hook.sh (01-hermes-setup) so $HERMES_HOME/memories
-# already exists and is owned by the hermes user.
+# Plain sh (no with-contenv shebang — s6/execline isn't available on Render).
 set -eu
 
 HERMES_HOME="${HERMES_HOME:-/opt/data}"

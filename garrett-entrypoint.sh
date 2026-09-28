@@ -1,21 +1,14 @@
 #!/bin/sh
-# DIAGNOSTIC entrypoint — determine what Render actually executes and where it fails.
-# No `set -e`: capture every step's exit code explicitly.
-echo "===GARRETT-ENTRYPOINT-RAN==="
-echo "PID=$$ UID=$(id -u) GID=$(id -g)"
-echo "HERMES_HOME=${HERMES_HOME:-unset}"
-echo "PATH=$PATH"
-echo "--- /opt/hermes ---"
-ls -la /opt/hermes/ 2>&1 | head -30
-echo "--- /opt/data ---"
-ls -la /opt/data/ 2>&1 | head -30
-echo "===STAGE2==="
-/opt/hermes/docker/stage2-hook.sh 2>&1
-echo "===STAGE2-EXIT=$?==="
-echo "===SEED==="
-/opt/hermes/seed-memories.sh 2>&1
-echo "===SEED-EXIT=$?==="
-echo "===GATEWAY==="
-/opt/hermes/docker/main-wrapper.sh gateway run 2>&1
-echo "===GATEWAY-EXIT=$?==="
-echo "===DONE==="
+# Garrett cloud entrypoint for Render.
+#
+# Render runs dockerCommand directly as PID 1, bypassing the image
+# ENTRYPOINT and s6-overlay /init (which aborts "can only run as pid 1").
+# So s6 tools aren't on PATH — we ship a s6-setuidgid shim at
+# /opt/hermes/bin and run the normal stage2 bootstrap + memory seed +
+# gateway in the foreground, no s6 supervision.
+set -e
+export HERMES_HOME="${HERMES_HOME:-/opt/data}"
+export HOME=/opt/data
+/opt/hermes/docker/stage2-hook.sh
+/opt/hermes/seed-memories.sh
+exec /opt/hermes/docker/main-wrapper.sh gateway run
