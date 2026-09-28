@@ -23,10 +23,17 @@ COPY SOUL.md /opt/hermes/docker/SOUL.md
 # seeded too. .dockerignore excludes the manifest/cache dotfiles.
 COPY skills/ /opt/hermes/skills/
 
-# --- Memories: no auto-seed exists, so ship them + a first-boot hook --------
+# --- Memories: no auto-seed exists, so ship them + a seed script ------------
 COPY memories/ /opt/hermes/garrett-memories/
 COPY seed-memories.sh /opt/hermes/seed-memories.sh
 RUN chmod +x /opt/hermes/seed-memories.sh
-RUN printf '#!/command/with-contenv sh\nexec /opt/hermes/seed-memories.sh\n' \
-        > /etc/cont-init.d/20-garrett-seed-memories \
-    && chmod +x /etc/cont-init.d/20-garrett-seed-memories
+
+# --- Entrypoint: bypass s6-overlay (requires PID 1; Render doesn't give it) -
+# Render's Docker runtime does not exec the image entrypoint as PID 1, so
+# s6-overlay's /init aborts ("can only run as pid 1", exit 128 — hermes-agent
+# issue #36208). Run the stage2 bootstrap + memory seed + gateway in
+# foreground directly instead of under s6 supervision.
+COPY garrett-entrypoint.sh /opt/hermes/garrett-entrypoint.sh
+RUN chmod +x /opt/hermes/garrett-entrypoint.sh
+ENTRYPOINT ["/opt/hermes/garrett-entrypoint.sh"]
+CMD ["gateway", "run"]
