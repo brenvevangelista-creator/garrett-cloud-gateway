@@ -10,10 +10,15 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: gateway run  # s6-supervised gateway, main process
+    # dockerCommand OVERRIDES the image ENTRYPOINT on Render (it runs this
+    # command directly as PID 1, ignoring ENTRYPOINT/CMD). Omit it and Render
+    # runs the Dockerfile CMD (`gateway run`) bare — skipping the bootstrap.
+    # So we explicitly run the entrypoint script, which does the stage2 config
+    # seed + NOUS_API_KEY persist + memory seed, then execs `gateway run`.
+    dockerCommand: /opt/hermes/garrett-entrypoint.sh
     plan: standard              # 2 GB — gateway spikes past 512 MB in conversation
     region: oregon
-    autoDeploy: yes
+    autoDeploy: true
     branch: main
     disk:
       name: garrett-data
@@ -23,6 +28,6 @@ services:
       - key: HERMES_GATEWAY_BOOTSTRAP_STATE
         value: running          # auto-start gateway on first boot
       # Secrets — set via API, never in this file:
-      #   HERMES_AUTH_JSON_BOOTSTRAP  (Nous Portal auth.json content)
-      #   TELEGRAM_BOT_TOKEN
-      #   TELEGRAM_ALLOWED_USERS
+      #   NOUS_API_KEY              (static Nous Portal API key, sk-nous-…)
+      #   TELEGRAM_BOT_TOKEN        (= GARRETT_BOT_TOKEN value → @Garrett_assistant_bot)
+      #   TELEGRAM_ALLOWED_USERS    (comma-separated numeric Telegram user IDs)
