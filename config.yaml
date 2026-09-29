@@ -42,7 +42,9 @@ memory:
   user_profile_enabled: true
 model:
   default: deepseek/deepseek-v4-pro
-  provider: nous
+  provider: custom
+  base_url: https://inference-api.nousresearch.com/v1
+  key_env: NOUS_API_KEY
 platform_toolsets:
   cli:
     - hermes-cli
